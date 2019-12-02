@@ -1,1 +1,0 @@
-Copy the BundleTool.cs and/or ContentTool.cs file into a subfolder of Editor in your Unity project's Assets directory.

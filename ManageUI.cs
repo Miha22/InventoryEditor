@@ -7,19 +7,20 @@ using System.IO;
 using Rocket.Unturned.Chat;
 using System.Linq;
 using Rocket.API;
+using Rocket.Unturned;
 
 namespace ItemRestrictorAdvanced
 {
     class ManageUI
     {
         internal static List<ManageUI> Instances;
-        internal static List<Player> UICallers;
-        internal static byte PagesCount { get; set; }
+        //internal static List<Player> UICallers;
+        internal static byte PagesCountPl { get; set; }
         //private static CancellationTokenSource cts;
         //private static CancellationToken token;
         internal byte PagesCountInv { get; set; }
         private byte playerIndex;
-        private Rocket.API.IRocketPlayer caller;
+        private IRocketPlayer caller;
         private byte itemIndex;
         private byte currentPage;
         private Player targetPlayer;
@@ -35,39 +36,58 @@ namespace ItemRestrictorAdvanced
         static ManageUI()
         {
             Instances = new List<ManageUI>();
-            UICallers = new List<Player>();
+            //UICallers = new List<Player>();
+
             //cts = new CancellationTokenSource();
             //token = cts.Token;
         }
 
-        public ManageUI(byte pagesCount, Player caller, Rocket.API.IRocketPlayer callerP)
+        public ManageUI(byte pagesCount, Player caller, IRocketPlayer callerP)
         {
             currentPage = 1;
             callerPlayer = caller;
-            ManageUI.PagesCount = pagesCount;// !
+            PagesCountPl = pagesCount;// !
             UIitemsPages = new List<List<MyItem>>();
-            Instances.Add(this);
             overload = EOverload.None;
             selectedId = 0;
             this.caller = callerP;
+            U.Events.OnPlayerConnected += OnPlayersChangeC;
+            U.Events.OnPlayerDisconnected += OnPlayersChangeD;
+            Instances.Add(this);
+        }
+
+        internal void OnPlayersChangeC(UnturnedPlayer player)
+        {
+            EffectManager.askEffectClearByID(8100, callerPlayer.channel.owner.playerID.steamID);
+            SetPlayersList(callerPlayer.channel.owner.playerID.steamID);
+        }
+
+        internal void OnPlayersChangeD(UnturnedPlayer player)
+        {
+            EffectManager.askEffectClearByID(8100, callerPlayer.channel.owner.playerID.steamID);
+            SetPlayersList2(callerPlayer.channel.owner.playerID.steamID, player.CSteamID);
         }
 
         internal static void UnLoad()
         {
             //cts.Cancel();
-            if (ManageUI.Instances != null)
+            if (Instances != null)
             {
-                foreach (ManageUI manageUI in ManageUI.Instances)
+                foreach (ManageUI manageUI in Instances) 
+                {
                     manageUI.UnLoadEvents();
+                    U.Events.OnPlayerConnected -= manageUI.OnPlayersChangeC;
+                    U.Events.OnPlayerDisconnected -= manageUI.OnPlayersChangeD; ;
+                }
             }
-            
-            foreach (Player caller in UICallers)
+            //EffectManager.askEffectClearAll();
+            foreach (SteamPlayer caller in Provider.clients)
             {
-                EffectManager.askEffectClearByID(8100, caller.channel.owner.playerID.steamID);
-                EffectManager.askEffectClearByID(8101, caller.channel.owner.playerID.steamID);
-                EffectManager.askEffectClearByID(8102, caller.channel.owner.playerID.steamID);
-                EffectManager.askEffectClearByID(8103, caller.channel.owner.playerID.steamID);
-                caller.serversideSetPluginModal(false);
+                EffectManager.askEffectClearByID(8100, caller.playerID.steamID);
+                EffectManager.askEffectClearByID(8101, caller.playerID.steamID);
+                EffectManager.askEffectClearByID(8102, caller.playerID.steamID);
+                EffectManager.askEffectClearByID(8103, caller.playerID.steamID);
+                caller.player.serversideSetPluginModal(false);
             }
         }
 
@@ -81,30 +101,52 @@ namespace ItemRestrictorAdvanced
             EffectManager.onEffectTextCommitted -= this.OnTextCommited8103;
         }
 
-        private void SetCurrentPage(byte page, ulong mSteamID)
+        //private void SetCurrentPage(byte page, ulong mSteamID)
+        //{
+        //    for (byte i = 0; i < Refresh.Refreshes.Length; i++)
+        //    {
+        //        if (Refresh.Refreshes[i].CallerSteamID.m_SteamID == mSteamID)
+        //        {
+        //            Refresh.Refreshes[i].CurrentPage = page;
+        //            return;
+        //        }
+        //    }
+        //}
+
+        private void SetPlayersList(Steamworks.CSteamID CallerSteamID)
         {
-            for (byte i = 0; i < Refresh.Refreshes.Length; i++)
-            {
-                if (Refresh.Refreshes[i].CallerSteamID.m_SteamID == mSteamID)
-                {
-                    Refresh.Refreshes[i].CurrentPage = page;
-                    return;
-                }
-            }
+            EffectManager.sendUIEffect(8100, 22, CallerSteamID, true);
+            byte multiplier = (byte)((currentPage - 1) * 24);//next 24 player start index
+
+            for (byte i = multiplier; i < 24 + multiplier && i < (byte)Provider.clients.Count; i++)
+                EffectManager.sendUIEffectText(22, CallerSteamID, true, $"text{i - multiplier}", $"{Provider.clients[i].playerID.characterName}");
+            EffectManager.sendUIEffectText(22, CallerSteamID, true, "pagemax", $"{PagesCountPl}");
+            EffectManager.sendUIEffectText(22, CallerSteamID, true, "page", $"{currentPage}");
         }
 
-        private void SetPlayersList(byte CurrentPage, Steamworks.CSteamID CallerSteamID)
+        private void SetPlayersList2(Steamworks.CSteamID CallerSteamID, Steamworks.CSteamID disconnected)
         {
-            byte multiplier = (byte)((CurrentPage - 1) * 24);
-            for (byte i = multiplier; (i < (24 + multiplier)) && (i < (byte)Provider.clients.Count); i++)
-                EffectManager.sendUIEffectText(22, CallerSteamID, false, $"text{i}", $"{Provider.clients[i].playerID.characterName}");
+            EffectManager.sendUIEffect(8100, 22, CallerSteamID, true);
+            byte multiplier = (byte)((currentPage - 1) * 24);//next 24 player start index
+
+            for (byte i = multiplier, j = 0; j < 24 + multiplier && j < (byte)Provider.clients.Count; i++, j++)
+            {
+                if (Provider.clients[j].playerID.steamID == disconnected)
+                {
+                    i--;
+                    continue;
+                }
+                EffectManager.sendUIEffectText(22, CallerSteamID, true, $"text{i - multiplier}", $"{Provider.clients[j].playerID.characterName}");
+            }
+                
+            EffectManager.sendUIEffectText(22, CallerSteamID, true, "pagemax", $"{PagesCountPl}");
+            EffectManager.sendUIEffectText(22, CallerSteamID, true, "page", $"{currentPage}");
         }
 
         public void OnEffectButtonClick(Player callerPlayer, string buttonName)
         {
             //System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"text[0-9]", System.Text.RegularExpressions.RegexOptions.Compiled);
-            
-            if(buttonName.Substring(0, 4) == "text")
+            if (buttonName.Substring(0, 4) == "text")
             {
                 byte.TryParse(buttonName.Substring(4), out playerIndex);
                 buttonName = "text";
@@ -112,75 +154,63 @@ namespace ItemRestrictorAdvanced
             switch (buttonName)
             {
                 case "text":
-                    if (Provider.clients.Count < ((playerIndex + 1) * PagesCount))
+                    if (Provider.clients.Count < playerIndex + 1 + ((currentPage - 1) * 24))//((playerIndex + 1) * PagesCountPl)
                         return;
-                    playerIndex = (byte)((currentPage - 1) * 24);
-                    currentPage = 1;
                     try
                     {
-                        targetPlayer = Provider.clients[playerIndex].player;
+                        targetPlayer = Provider.clients[playerIndex + ((currentPage - 1) * 24)].player;
                         playerSteamID = targetPlayer.channel.owner.playerID.steamID.ToString();
                         targetName = targetPlayer.channel.owner.playerID.characterName;
                     }
                     catch (Exception)
                     {
                         Logger.Log($"Player not found: player has just left the server. UI call from: {callerPlayer.channel.owner.playerID.characterName}");
-                        return;
+                        goto case "ButtonExit";
                     }
                     targetPlayer.inventory.onInventoryAdded += OnInventoryChange;
                     targetPlayer.inventory.onInventoryRemoved += OnInventoryChange;
                     EffectManager.askEffectClearByID(8100, callerPlayer.channel.owner.playerID.steamID);
+                    currentPage = 1;
                     GetTargetItems();
                     ShowItemsUI(callerPlayer, currentPage);
 
+                    U.Events.OnPlayerConnected -= OnPlayersChangeC;
+                    U.Events.OnPlayerDisconnected -= OnPlayersChangeD;
                     EffectManager.onEffectButtonClicked -= OnEffectButtonClick;
                     EffectManager.onEffectButtonClicked += OnEffectButtonClick8101;
-                    for (byte i = 0; i < Refresh.Refreshes.Length; i++)
-                    {
-                        if (Refresh.Refreshes[i].CallerSteamID.m_SteamID == callerPlayer.channel.owner.playerID.steamID.m_SteamID)
-                        {
-                            Refresh.Refreshes[i].TurnOff(i);
-                            break;
-                        }
-                    }
+                    //for (byte i = 0; i < Refresh.Refreshes.Length; i++)
+                    //{
+                    //    if (Refresh.Refreshes[i].CallerSteamID.m_SteamID == callerPlayer.channel.owner.playerID.steamID.m_SteamID)
+                    //    {
+                    //        Refresh.Refreshes[i].TurnOff(i);
+                    //        break;
+                    //    }
+                    //}
                     break;
 
                 case "ButtonNext":
-                    if (currentPage == PagesCount)
-                    {
-                        EffectManager.sendUIEffectText(22, callerPlayer.channel.owner.playerID.steamID, true, "page", $"{PagesCount}");
-                        SetCurrentPage(PagesCount, callerPlayer.channel.owner.playerID.steamID.m_SteamID);
-                        SetPlayersList(PagesCount, callerPlayer.channel.owner.playerID.steamID);
+                    //Console.WriteLine($"currentpage before: {currentPage}");
+                    if (currentPage == PagesCountPl)
                         currentPage = 1;
-                    }
                     else
-                    {
-                        EffectManager.sendUIEffectText(22, callerPlayer.channel.owner.playerID.steamID, true, "page", $"{currentPage}");
-                        SetCurrentPage(currentPage, callerPlayer.channel.owner.playerID.steamID.m_SteamID);
-                        SetPlayersList(currentPage, callerPlayer.channel.owner.playerID.steamID);
                         currentPage++;
-                        //sends current page
-                    }
+                    //Console.WriteLine($"currentpage after: {currentPage}");
+                    EffectManager.askEffectClearByID(8100, callerPlayer.channel.owner.playerID.steamID);
+                    //SetCurrentPage(currentPage, callerPlayer.channel.owner.playerID.steamID.m_SteamID);
+                    SetPlayersList(callerPlayer.channel.owner.playerID.steamID);
                     break;
                 case "ButtonPrev":
                     if (currentPage == 1)
-                    {
-                        EffectManager.sendUIEffectText(22, callerPlayer.channel.owner.playerID.steamID, true, "page", $"1");
-                        SetCurrentPage(1, callerPlayer.channel.owner.playerID.steamID.m_SteamID);
-                        SetPlayersList(1, callerPlayer.channel.owner.playerID.steamID);
-                        currentPage = PagesCount;
-                        //sends 1st page
-                    }
+                        currentPage = PagesCountPl;
                     else
-                    {
-                        EffectManager.sendUIEffectText(22, callerPlayer.channel.owner.playerID.steamID, true, "page", $"{currentPage}");
-                        SetCurrentPage(currentPage, callerPlayer.channel.owner.playerID.steamID.m_SteamID);
-                        SetPlayersList(currentPage, callerPlayer.channel.owner.playerID.steamID);
                         currentPage--;
-                        //sends current page
-                    }
+                    EffectManager.askEffectClearByID(8100, callerPlayer.channel.owner.playerID.steamID);
+                    //SetCurrentPage(currentPage, callerPlayer.channel.owner.playerID.steamID.m_SteamID);
+                    SetPlayersList(callerPlayer.channel.owner.playerID.steamID);
                     break;
                 case "ButtonExit":
+                    U.Events.OnPlayerConnected -= OnPlayersChangeC;
+                    U.Events.OnPlayerDisconnected -= OnPlayersChangeD;
                     EffectManager.onEffectButtonClicked -= OnEffectButtonClick;
                     QuitUI(callerPlayer, 8100);
                     break;
@@ -228,7 +258,16 @@ namespace ItemRestrictorAdvanced
                     break;
 
                 case "ButtonNext":
-                    if (currentPage == PagesCountInv)
+                    if (UIitemsPages[currentPage - 1].Count == 24 && currentPage == PagesCountInv)
+                    {
+                        currentPage++;
+                        PagesCountInv++;
+                        UIitemsPages.Add(new List<MyItem>());
+                        EffectManager.askEffectClearByID(8101, callerPlayer.channel.owner.playerID.steamID);
+                        ShowItemsUI(callerPlayer, currentPage);
+                        break;
+                    }
+                    else if (currentPage == PagesCountInv)
                         currentPage = 1;
                     else
                         currentPage++;
@@ -442,10 +481,10 @@ namespace ItemRestrictorAdvanced
                 case "ButtonAdd":
                     if (selectedId == 0)
                         break;
-                    ItemAsset item = (ItemAsset)Assets.find(EAssetType.ITEM, selectedId);
-                    Item newitem = new Item(item.id, item.amount, 100, item.getState());
                     if (targetPlayer != null)
                     {
+                        ItemAsset item = (ItemAsset)Assets.find(EAssetType.ITEM, selectedId);
+                        Item newitem = new Item(item.id, item.amount, 100, item.getState());
                         if (!targetPlayer.inventory.tryAddItemAuto(newitem, false, false, false, false))
                         {
                             UnturnedChat.Say(callerPlayer.channel.owner.playerID.steamID, $"{(targetPlayer != null ? targetPlayer.channel.owner.playerID.characterName + "'s" : "player's")} inventory is full, loading item: {item.name} to his virtual inventory");
@@ -453,11 +492,7 @@ namespace ItemRestrictorAdvanced
                         }
                     }
                     else
-                    {
                         UnturnedChat.Say(callerPlayer.channel.owner.playerID.steamID, $"Player has just left the server, loading to player's virtual inventory..");
-                        for (ushort i = 0; i < Convert.ToUInt16(count); i++)
-                            Functions.WriteItem(newitem, Plugin.Instance.pathTemp + $"\\{playerSteamID}\\Heap.dat");// if player is offline load to virtual heap
-                    }
                     //EffectManager.askEffectClearByID(8102, callerPlayer.channel.owner.playerID.steamID);
                     //EffectManager.sendUIEffect(8102, 24, callerPlayer.channel.owner.playerID.steamID, true);
                     break;
@@ -487,16 +522,6 @@ namespace ItemRestrictorAdvanced
                     EffectManager.onEffectTextCommitted += OnTextCommited8103;
                     EffectManager.sendUIEffect(8103, 27, callerPlayer.channel.owner.playerID.steamID, true);
                     overload = EOverload.Two;
-                    break;
-                //case "ButtonOk":
-                //    EffectManager.onEffectButtonClicked -= OnEffectButtonClick8102;
-                //    EffectManager.onEffectButtonClicked += OnEffectButtonClick8101;
-                //    EffectManager.onEffectTextCommitted -= OnTextCommited;
-                //    EffectManager.askEffectClearByID(8102, callerPlayer.channel.owner.playerID.steamID);
-                //    break;
-                default://non button click
-                    //EffectManager.askEffectClearByID(8102, callerPlayer.channel.owner.playerID.steamID);
-                    //EffectManager.sendUIEffect(8102, 24, callerPlayer.channel.owner.playerID.steamID, false);
                     break;
             }
             //Console.WriteLine("IF AND ELSE PASSED");
@@ -635,7 +660,7 @@ namespace ItemRestrictorAdvanced
 
             if (items.Count == 0)
             {
-                Console.WriteLine("items.count in get gettarget is 0");
+                //Console.WriteLine("items.count in get gettarget is 0");
                 PagesCountInv = 1;
                 UIitemsPages.Add(items);
                 return;
@@ -650,6 +675,7 @@ namespace ItemRestrictorAdvanced
                 UIitemsPages.Add(myPage);
             }
             PagesCountInv = (byte)UIitemsPages.Count;
+            currentPage = currentPage > PagesCountInv ? currentPage = PagesCountInv : currentPage;
             //Console.WriteLine("in get target items");
             //Console.WriteLine($"UIitemsPages.Count: {UIitemsPages.Count}");
             //Console.WriteLine($"PagesCountInv: {PagesCountInv}");
@@ -659,7 +685,7 @@ namespace ItemRestrictorAdvanced
         {
             EffectManager.askEffectClearByID(effectId, callerPlayer.channel.owner.playerID.steamID);
             callerPlayer.serversideSetPluginModal(false);
-            ManageUI.UICallers.Remove(callerPlayer);
+            //ManageUI.UICallers.Remove(callerPlayer);
             //Console.WriteLine($"caller: {callerPlayer.channel.owner.playerID.characterName} removed from list!");
             UIitemsPages.Clear();
         }

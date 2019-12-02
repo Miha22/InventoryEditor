@@ -17,8 +17,10 @@ namespace ItemRestrictorAdvanced
         public void Execute(IRocketPlayer caller, string[] command)
         {
             ManageUI.UnLoad();
-            Console.WriteLine(ManageUI.Instances == null);
-            Logger.Log("Inventory UI stoped", ConsoleColor.Cyan);
+            //Console.WriteLine(ManageUI.Instances == null);
+            Console.WriteLine();
+            Logger.Log($"InventoryEditor was immediately stoped by {caller.DisplayName} at {DateTime.Now.TimeOfDay}", ConsoleColor.Yellow);
+            Console.WriteLine();
         }
     }
 }

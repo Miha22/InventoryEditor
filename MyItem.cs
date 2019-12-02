@@ -1,21 +1,19 @@
-﻿
-using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace ItemRestrictorAdvanced
 {
-    [JsonObject(MemberSerialization.OptIn)]
+    //[JsonObject(MemberSerialization.OptIn)]
     sealed class MyItem
     {
-        [JsonProperty]
+        //[JsonProperty]
         public ushort ID { get; set; }
-        [JsonProperty]
+        //[JsonProperty]
         public ushort Count { get; set; }
-        [JsonProperty]
+        //[JsonProperty]
         public byte x { get; set; }
-        [JsonProperty]
+        //[JsonProperty]
         public byte Quality { get; set; }
-        [JsonConverter(typeof(MyConverter)), JsonProperty]
+       // [JsonConverter(typeof(MyConverter)), JsonProperty]
         public byte[] State { get; set; }
         public byte Rot { get; set; }
         public byte X { get; set; }

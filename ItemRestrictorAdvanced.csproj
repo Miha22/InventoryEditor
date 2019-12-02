@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ItemRestrictorAdvanced</RootNamespace>
-    <AssemblyName>ItemRestrictorAdvanced</AssemblyName>
+    <AssemblyName>InventoryEditor</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -35,26 +35,17 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Block.cs" />
-    <Compile Include="CommandBoxUp.cs" />
-    <Compile Include="CommandGetBoxes.cs" />
     <Compile Include="CommandGetVirtual.cs" />
-    <Compile Include="CommandTest.cs" />
-    <Compile Include="CommandI.cs" />
     <Compile Include="CommandInvsee.cs" />
     <Compile Include="CommandUIEmergency.cs" />
-    <Compile Include="CommandV.cs" />
     <Compile Include="ECharName.cs" />
     <Compile Include="EFailure.cs" />
     <Compile Include="EOverload.cs" />
     <Compile Include="Functions.cs" />
-    <Compile Include="Group.cs" />
     <Compile Include="EIgnore.cs" />
-    <Compile Include="Item.cs" />
-    <Compile Include="Liquidation.cs" />
     <Compile Include="ManageCloudUI.cs" />
     <Compile Include="ManageUI.cs" />
     <Compile Include="MyConverter.cs" />
-    <Compile Include="MyEffectManager.cs" />
     <Compile Include="MyItem.cs" />
     <Compile Include="MyItemsPage.cs" />
     <Compile Include="Page.cs" />
@@ -63,12 +54,7 @@
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Refresh.cs" />
-    <Compile Include="SteamChannel.cs" />
     <Compile Include="SteamPlayerCompaper.cs" />
-    <Compile Include="SItemsPair.cs" />
-    <Compile Include="Vehicle.cs" />
-    <Compile Include="Watcher.cs" />
-    <Compile Include="CommandBoxDown.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -78,10 +64,6 @@
     <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>lib\Assembly-CSharp-firstpass.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>lib\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="Rocket.API, Version=2.6.4.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -96,11 +78,6 @@
       <HintPath>lib\Rocket.Unturned.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.IO.FileSystem.Watcher, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>lib\System.IO.FileSystem.Watcher.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ValueTuple, Version=4.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>lib\System.ValueTuple.dll</HintPath>

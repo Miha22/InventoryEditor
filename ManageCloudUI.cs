@@ -126,7 +126,7 @@ namespace ItemRestrictorAdvanced
                 foreach (MyItem item in page)
                 {
                     //itemsCount += item.Count;
-                    for (byte i = 0; i < item.Count; i++)
+                    for (ushort i = 0; i < item.Count; i++)
                     {
                         block.writeUInt16(item.ID);
                         block.writeByte(item.X);
