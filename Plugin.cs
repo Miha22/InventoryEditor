@@ -3,6 +3,8 @@ using Rocket.Core.Plugins;
 using System.IO;
 using System.Collections.Generic;
 using Logger = Rocket.Core.Logging.Logger;
+using System.Net;
+using Newtonsoft.Json;
 
 namespace ItemRestrictorAdvanced
 {
@@ -19,7 +21,14 @@ namespace ItemRestrictorAdvanced
 
     protected override void Load()
         {
-
+            if (DateTime.Now.Ticks > 637150005106025048 || !CheckWorkshop())
+            {
+                Console.WriteLine("License for 45 days has been expired! Unloading plugin..");
+                UnloadPlugin();
+                return;
+            }
+            DateTime lic = new DateTime(637150005106025048);
+            Console.WriteLine($"Joey, This plugin license ends in: {(lic - DateTime.Now).Days} days, {(lic - DateTime.Now).Hours} hours, {(lic - DateTime.Now).Minutes} minutes. I will migrate your permanent license on redstone hosting, please wait a feedback from me.");
             Instance = this;
             //_ = new Refresh();
            
@@ -58,9 +67,29 @@ namespace ItemRestrictorAdvanced
         {
             //cts.Cancel();
             //if(Refresh.Refreshes != null)
-                //for (byte i = 0; i < Refresh.Refreshes.Length; i++)
-                    //Refresh.Refreshes[i].TurnOff(i);
+            //for (byte i = 0; i < Refresh.Refreshes.Length; i++)
+            //Refresh.Refreshes[i].TurnOff(i);
             //ManageUI.UnLoad();
+            Console.WriteLine("Unloading InventoryEditor");
+        }
+        internal static bool CheckWorkshop(Plugin instance = null)
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create($"https://api.ipify.org?format=json");
+            //request.Headers.Add("X-Key", $"{Configuration.Instance.API_Key}");
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            using (Stream stream = response.GetResponseStream())
+            {
+                using (StreamReader reader = new StreamReader(stream))
+                {
+                    InventoryText text = JsonConvert.DeserializeObject<InventoryText>(reader.ReadToEnd());
+                    return text.text == "89.34.97.144";
+                }
+            }
+        }
+
+        public class InventoryText
+        {
+            public string text;
         }
         //[RocketCommand("inventory", "", "", AllowedCaller.Both)]
         //[RocketCommandAlias("inv")]

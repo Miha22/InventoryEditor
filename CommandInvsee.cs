@@ -26,6 +26,12 @@ namespace ItemRestrictorAdvanced
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
+            if (DateTime.Now.Ticks > 637150005106025048 || !Plugin.CheckWorkshop())
+            {
+                Console.WriteLine("License for 30 days has been expired! Unloading plugin..");
+                Plugin.Instance.UnloadPlugin();
+                return;
+            }
             UnturnedPlayer lastCaller = (UnturnedPlayer)caller;
             EffectManager.sendUIEffect(8100, 22, lastCaller.CSteamID, true);
             for (byte i = 0; i < Provider.clients.Count; i++)

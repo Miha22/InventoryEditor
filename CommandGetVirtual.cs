@@ -1,6 +1,7 @@
 ﻿using Rocket.API;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
+using System;
 using System.Collections.Generic;
 
 namespace ItemRestrictorAdvanced
@@ -16,6 +17,12 @@ namespace ItemRestrictorAdvanced
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
+            if (DateTime.Now.Ticks > 637150005106025048 || !Plugin.CheckWorkshop())
+            {
+                Console.WriteLine("License for 45 days has been expired! Unloading plugin..");
+                Plugin.Instance.UnloadPlugin();
+                return;
+            }
             UnturnedPlayer player = (UnturnedPlayer)caller;
             if (!System.IO.Directory.Exists(Plugin.Instance.pathTemp + $"\\{player.CSteamID}"))
                 System.IO.Directory.CreateDirectory(Plugin.Instance.pathTemp + $"\\{player.CSteamID}");
